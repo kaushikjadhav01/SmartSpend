@@ -11,7 +11,11 @@ from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime
 
-api_token = "INSERT API KEY HERE"
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+api_token = os.getenv('TELEGRAM_BOT_TOKEN')
 
 dateFormat = '%d-%b-%Y'
 timeFormat = '%H:%M'
