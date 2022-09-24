@@ -10,12 +10,17 @@ import time
 from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime
-
+from telethon import TelegramClient
+from telethon.errors import SessionPasswordNeededError
+import asyncio
 import os
 from dotenv import load_dotenv
 load_dotenv()
 
 api_token = os.getenv('TELEGRAM_BOT_TOKEN')
+api_id = os.getenv('TELEGRAM_API_ID')
+api_hash = os.getenv('TELEGRAM_API_HASH')
+api_username = os.getenv('TELEGRAM_USERNAME')
 
 dateFormat = '%d-%b-%Y'
 timeFormat = '%H:%M'
@@ -61,6 +66,7 @@ def start_and_menu_command(m):
     for c in commands:  # generate help text out of the commands dictionary defined at the top
         text_intro += "/" + c + ": "
         text_intro += commands[c] + "\n\n"
+    print(chat_id)
     bot.send_message(chat_id, text_intro)
     return True
 
@@ -76,6 +82,14 @@ def command_add(message):
         markup.add(c)
     msg = bot.reply_to(message, 'Select Category', reply_markup=markup)
     bot.register_next_step_handler(msg, post_category_selection)
+
+async def find_user_by_username(username):
+    async with TelegramClient(api_username, api_id, api_hash) as client:
+            client.start()
+            if not await client.is_user_authorized():
+                client.send_code_request(api_id)
+            user = await client.get_entity(username)
+            return user
 
 def post_category_selection(message):
         try:
@@ -385,7 +399,7 @@ def addUserHistory(chat_id, user_record):
 	user_list[str(chat_id)].append(user_record)
 	return user_list
 
-def main():
+async def main():
     try:
         bot.polling(none_stop=True)
     except Exception:
@@ -393,4 +407,4 @@ def main():
         print("Connection Timeout")
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
