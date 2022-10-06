@@ -21,7 +21,7 @@ api_hash = os.getenv('TELEGRAM_API_HASH')
 api_username = os.getenv('TELEGRAM_USERNAME')
 
 cluster = os.getenv('MONGO_DB_URL')
-if len(cluster) == 0:
+if not cluster or len(cluster) == 0:
     cluster = "mongodb+srv://"+api_username+":"+api_hash+"@cluster0.yon6aco.mongodb.net/smartSpendDB?retryWrites=true&w=majority"
 
 mongo_client = MongoClient(cluster)
@@ -29,9 +29,11 @@ db = mongo_client.smartSpendDB
 
 #global variables to store user choice, user list, spend categories, etc
 user_bills = {}
+user_limits = {}
 spend_categories = ['Food', 'Groceries', 'Utilities', 'Transport', 'Shopping', 'Miscellaneous', 'Others (Please Specify)']
 spend_display_option = ['Day', 'Month', 'All']
 timestamp_format = '%b %d %Y %I:%M%p'
+limit_categories = ['daily', 'monthly', 'yearly', 'View Limits']
 
 #set of implemented commands and their description
 commands = {
@@ -40,7 +42,9 @@ commands = {
     'display': 'Show sum of expenditure for the current day/month',
     'history': 'Display spending history',
     'delete': 'Clear/Erase all your records',
-    'edit': 'Edit/Change spending details'
+    'edit': 'Edit/Change spending details',
+    'limit': 'Add daily/monthly/yearly limits for spending'
+
 }
 
 bot = telebot.TeleBot(api_token)
@@ -194,6 +198,10 @@ def add_bill_to_database(message):
     print('Added record '+ str(user_bills) +' to user_bills collection')
     bot.send_message(chat_id, 'The following expenditure has been recorded: You have spent $' + str(user_bills['cost']) + ' for ' + str(user_bills['category']) + ' on ' + str(user_bills['timestamp'].strftime(timestamp_format)))
     user_bills.clear()
+    # Check if limits are set and notify if they are crossed.
+    if not user_limits['user_telegram_id'] or user_limits['user_telegram_id'] != chat_id:
+        user_limits['user_telegram_id'] = chat_id
+    limit_history = list(db.user_limits.find({'user_telegram_id' : user_limits['user_telegram_id']}))   
 
 def validate_entered_amount(amount_entered):
     if len(amount_entered) > 0 and len(amount_entered) <= 15:
@@ -370,6 +378,57 @@ def display_total(message):
 def command_delete(message):
     db.user_bills.delete_many({'user_telegram_id': message.chat.id})
     bot.send_message(message.chat.id, 'All data deleted.')
+
+@bot.message_handler(commands=['limit'])
+def command_limit(message):
+    chat_id = message.chat.id
+    user_limits['user_telegram_id'] = chat_id
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup.row_width = 2
+    for c in limit_categories:
+        markup.add(c)
+    msg = bot.reply_to(message, 'Select Category', reply_markup=markup)
+    bot.register_next_step_handler(msg, post_limit_category_selection)
+
+def post_limit_category_selection(message):
+    chat_id = message.chat.id
+    selected_limit_category = message.text
+    if selected_limit_category != 'View Limits' and selected_limit_category in limit_categories:
+        global limit_category
+        limit_category = selected_limit_category
+        message = bot.send_message(chat_id, 'How much limit do you want to set on a {} basis? \n(Enter numeric values only)'.format(str(limit_category)))
+        bot.register_next_step_handler(message, post_limit_amount_input)
+    elif selected_limit_category == 'View Limits':
+        print("viewing limits for current user")
+        view_limits()
+    else:
+        message = bot.send_message(chat_id, 'Entered wrong input')
+
+def post_limit_amount_input(message):
+    chat_id = message.chat.id
+    amount_entered = message.text
+    amount_value = validate_entered_amount(amount_entered)
+
+    #db.user_limits.delete_many({'user_telegram_id': message.chat.id})
+
+    user_history = list(db.user_limits.find({'user_telegram_id' : user_limits['user_telegram_id']}))
+
+    if len(user_history) == 0:
+        user_limits[limit_category] = amount_value
+        db.user_limits.insert_one(user_limits)
+        print('Added Limit record '+ str(user_limits) +' to user_limits collection')
+    else:
+         db.user_limits.find_one_and_update({"user_telegram_id" : user_limits['user_telegram_id']}, { '$set': { limit_category : amount_value} }, return_document = ReturnDocument.AFTER)
+
+def view_limits():
+    user_history_obj = db.user_limits.find({'user_telegram_id' : user_limits['user_telegram_id']})
+    for user_history in user_history_obj:
+        if 'daily' in user_history and user_history['daily']:
+            message = bot.send_message(user_limits['user_telegram_id'], 'Your Daily Limit is - {}'.format(user_history['daily']))
+        if 'monthly' in user_history and user_history['monthly']:
+            message = bot.send_message(user_limits['user_telegram_id'], 'Your Montly Limit is - {}'.format(user_history['monthly']))
+        if 'yearly' in user_history and user_history['yearly']:
+            message = bot.send_message(user_limits['user_telegram_id'], 'Your Yearly Limit is - {}'.format(user_history['yearly']))
 
 async def main():
     try:
