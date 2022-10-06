@@ -44,7 +44,6 @@ commands = {
     'delete': 'Clear/Erase all your records',
     'edit': 'Edit/Change spending details',
     'limit': 'Add daily/monthly/yearly limits for spending'
-
 }
 
 bot = telebot.TeleBot(api_token)
@@ -197,11 +196,59 @@ def add_bill_to_database(message):
     db.user_bills.insert_one(user_bills)
     print('Added record '+ str(user_bills) +' to user_bills collection')
     bot.send_message(chat_id, 'The following expenditure has been recorded: You have spent $' + str(user_bills['cost']) + ' for ' + str(user_bills['category']) + ' on ' + str(user_bills['timestamp'].strftime(timestamp_format)))
+    
+        # Check if limits are set and notify if they are crossed.
+    limit_history = db.user_limits.find({'user_telegram_id' : user_bills['user_telegram_id']})
+    for limit in limit_history:
+        if 'daily' in limit:
+            start_timestamp = datetime.combine(date.today(), datetime.min.time())
+            end_timestamp = start_timestamp + timedelta(days=1)
+            records = db.user_bills.aggregate([
+                {'$match' : { 'user_telegram_id' : message.chat.id, 'timestamp' : {'$gte':start_timestamp,'$lt': end_timestamp}}},
+                {'$group' : {'_id':{'category':'$category'}, 'count':{'$sum':'$cost'}}}
+                ])
+            if not records:
+                bot.send_message(chat_id, 'You have no Daily records')
+            else:
+                total_spending = 0
+                for record in records:
+                    total_spending += record['count']
+                if total_spending >= float(limit['daily']):
+                    bot.send_message(chat_id, 'DAILY LIMIT EXCEEDED. Your daily limit is {}, but you spent {} today'.format(limit['daily'], total_spending))
+
+        if 'monthly' in limit:
+            start_timestamp = datetime.combine(date.today().replace(day=1), datetime.min.time())
+            end_timestamp = datetime.combine(date.today(), datetime.max.time())
+            records = db.user_bills.aggregate([
+                {'$match' : { 'user_telegram_id' : message.chat.id, 'timestamp' : {'$gte':start_timestamp,'$lt': end_timestamp}}},
+                {'$group' : {'_id':{'category':'$category'}, 'count':{'$sum':'$cost'}}}
+            ])
+            if not records:
+                bot.send_message(chat_id, 'You have no Monthly records')
+            else:
+                total_spending = 0
+                for record in records:
+                    total_spending += record['count']
+                if total_spending >= float(limit['monthly']):
+                    bot.send_message(chat_id, 'MONTHLY LIMIT EXCEEDED. Your Monthly limit is {}, but you spent {} this month'.format(limit['monthly'], total_spending))
+
+        if 'yearly' in limit:
+            start_timestamp = datetime.combine(date.today().replace(day=1).replace(month=1), datetime.min.time())
+            end_timestamp = datetime.combine(date.today(), datetime.max.time())
+            records = db.user_bills.aggregate([
+                {'$match' : { 'user_telegram_id' : message.chat.id, 'timestamp' : {'$gte':start_timestamp,'$lt': end_timestamp}}},
+                {'$group' : {'_id':{'category':'$category'}, 'count':{'$sum':'$cost'}}}
+            ])
+            if not records:
+                bot.send_message(chat_id, 'You have no Yearly records')
+            else:
+                total_spending = 0
+                for record in records:
+                    total_spending += record['count']
+                if total_spending >= float(limit['yearly']):
+                    bot.send_message(chat_id, 'YEARLY LIMIT EXCEEDED. Your Yearly limit is {}, but you spent {} this year'.format(limit['yearly'], total_spending))
+    
     user_bills.clear()
-    # Check if limits are set and notify if they are crossed.
-    if not user_limits['user_telegram_id'] or user_limits['user_telegram_id'] != chat_id:
-        user_limits['user_telegram_id'] = chat_id
-    limit_history = list(db.user_limits.find({'user_telegram_id' : user_limits['user_telegram_id']}))   
 
 def validate_entered_amount(amount_entered):
     if len(amount_entered) > 0 and len(amount_entered) <= 15:
