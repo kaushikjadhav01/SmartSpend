@@ -20,7 +20,10 @@ api_id = os.getenv('TELEGRAM_API_ID')
 api_hash = os.getenv('TELEGRAM_API_HASH')
 api_username = os.getenv('TELEGRAM_USERNAME')
 
-cluster = "mongodb+srv://"+api_username+":"+api_hash+"@cluster0.yon6aco.mongodb.net/smartSpendDB?retryWrites=true&w=majority"
+cluster = os.getenv('MONGO_DB_URL')
+if len(cluster) == 0:
+    cluster = "mongodb+srv://"+api_username+":"+api_hash+"@cluster0.yon6aco.mongodb.net/smartSpendDB?retryWrites=true&w=majority"
+
 mongo_client = MongoClient(cluster)
 db = mongo_client.smartSpendDB
 
@@ -78,13 +81,16 @@ def command_add(message):
     bot.register_next_step_handler(msg, post_category_selection)
 
 async def find_user_by_username(username):
-    async with TelegramClient(api_username, api_id, api_hash) as client:
-            client.start()
-            if not await client.is_user_authorized():
-                client.send_code_request(api_id)
-            user = await client.get_entity(username)
-            return user
-                
+    try:
+        async with TelegramClient(api_username, api_id, api_hash) as client:
+                await client.start()
+                if not await client.is_user_authorized():
+                    client.send_code_request(api_id)
+                user = await client.get_entity(username)
+                return user
+    except Exception as e:
+        print("Failed to search user, details: ", e)
+                    
 def post_category_selection(message):
         try:
             chat_id = message.chat.id
@@ -126,13 +132,68 @@ def post_amount_input(message):
 
         user_bills['cost'] = float(amount_value)
         user_bills['timestamp'] = datetime.now()
-        db.user_bills.insert_one(user_bills)
-        print('Added record '+ str(user_bills) +' to user_bills collection')
-        bot.send_message(chat_id, 'The following expenditure has been recorded: You have spent $' + str(user_bills['cost']) + ' for ' + str(user_bills['category']) + ' on ' + str(user_bills['timestamp'].strftime(timestamp_format)))
-        user_bills.clear()
+
+        get_sharing_details(message)
 
     except Exception as e:
         bot.reply_to(message, 'Oh no. ' + str(e))
+
+def get_sharing_details(message):
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup.row_width = 2
+    markup.add("Yes")
+    markup.add("No")
+    bot.send_message(message.chat.id, 'Do you want to split this bill with any other users?', reply_markup=markup)
+    bot.register_next_step_handler(message, post_sharing_selection)
+
+def post_sharing_selection(message):
+    chat_id = message.chat.id
+    response = message.text
+
+    if response == "Yes":
+        # handle multi-user scenario
+        bot.send_message(message.chat.id, 'Enter the username of the other user: ')
+        bot.register_next_step_handler(message, handle_user_id_input_for_sharing)
+
+    else:
+        # handle direct commit scenario
+        add_bill_to_database(message)
+
+def handle_user_id_input_for_sharing(message):
+    chat_id = message.chat.id
+    username = str(message.text)
+
+    bot.send_message(chat_id, "User {} will be sent an update about the split".format(username))
+
+    user_bills['shared_with'] = [username]
+
+    # TODO: Can uncomment below to add recursive sharing once the print menu is finalized.
+    # get_sharing_details(message)
+
+
+    asyncio.run(send_update_to_user_about_expense(message, user_bills))
+
+    # NOTE: Keep this at last since it clears the bill details
+    add_bill_to_database(message)
+
+
+async def send_update_to_user_about_expense(message, user_bills):
+    try:
+        user = await find_user_by_username(message.text)
+
+        if user == None:
+            return
+
+        bot.send_message(user.id, 'An expense for {} on {} with value of {} was shared with you.'.format(str(user_bills['category']), str(user_bills['timestamp'].strftime(timestamp_format)), str(user_bills['cost'])))
+    except Exception as e:
+        print("Error during message send to remote user : ", e)
+
+def add_bill_to_database(message):
+    chat_id = message.chat.id
+    db.user_bills.insert_one(user_bills)
+    print('Added record '+ str(user_bills) +' to user_bills collection')
+    bot.send_message(chat_id, 'The following expenditure has been recorded: You have spent $' + str(user_bills['cost']) + ' for ' + str(user_bills['category']) + ' on ' + str(user_bills['timestamp'].strftime(timestamp_format)))
+    user_bills.clear()
 
 def validate_entered_amount(amount_entered):
     if len(amount_entered) > 0 and len(amount_entered) <= 15:
@@ -151,9 +212,9 @@ def show_history(message):
         chat_id = message.chat.id
         if user_history is None:
             raise Exception("Sorry! No spending records found!")
-        spend_total_str = "Here is your spending history : \n|    DATE AND TIME   | CATEGORY | AMOUNT   |\n-----------------------------------------------------------------------\n"
+        spend_total_str = "Here is your spending history : \n|    DATE AND TIME   | CATEGORY | AMOUNT | SHARED WITH  |\n-----------------------------------------------------------------------\n"
         for rec in user_history:
-            spend_total_str += '{:20s} {:20s} {}\n'.format(str(rec['timestamp'].strftime(timestamp_format)),  str(rec['category']),  str(rec['cost']))
+            spend_total_str += '{:20s} {:20s} {:20s} {}\n'.format(str(rec['timestamp'].strftime(timestamp_format)),  str(rec['category']),  str(rec['cost']), str(rec['shared_with'][0]) if 'shared_with' in rec.keys() else "")
         bot.send_message(chat_id, spend_total_str)
     except Exception as e:
         bot.reply_to(message, "Oops!" + str(e))	
