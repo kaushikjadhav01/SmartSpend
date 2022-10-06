@@ -21,7 +21,7 @@ api_hash = os.getenv('TELEGRAM_API_HASH')
 api_username = os.getenv('TELEGRAM_USERNAME')
 
 cluster = os.getenv('MONGO_DB_URL')
-if len(cluster) == 0:
+if not cluster or len(cluster) == 0:
     cluster = "mongodb+srv://"+api_username+":"+api_hash+"@cluster0.yon6aco.mongodb.net/smartSpendDB?retryWrites=true&w=majority"
 
 mongo_client = MongoClient(cluster)
@@ -29,9 +29,11 @@ db = mongo_client.smartSpendDB
 
 #global variables to store user choice, user list, spend categories, etc
 user_bills = {}
+user_limits = {}
 spend_categories = ['Food', 'Groceries', 'Utilities', 'Transport', 'Shopping', 'Miscellaneous', 'Others (Please Specify)']
 spend_display_option = ['Day', 'Month', 'All']
 timestamp_format = '%b %d %Y %I:%M%p'
+limit_categories = ['daily', 'monthly', 'yearly', 'View Limits']
 
 #set of implemented commands and their description
 commands = {
@@ -40,7 +42,8 @@ commands = {
     'display': 'Show sum of expenditure for the current day/month',
     'history': 'Display spending history',
     'delete': 'Clear/Erase all your records',
-    'edit': 'Edit/Change spending details'
+    'edit': 'Edit/Change spending details',
+    'limit': 'Add daily/monthly/yearly limits for spending'
 }
 
 bot = telebot.TeleBot(api_token)
@@ -193,6 +196,58 @@ def add_bill_to_database(message):
     db.user_bills.insert_one(user_bills)
     print('Added record '+ str(user_bills) +' to user_bills collection')
     bot.send_message(chat_id, 'The following expenditure has been recorded: You have spent $' + str(user_bills['cost']) + ' for ' + str(user_bills['category']) + ' on ' + str(user_bills['timestamp'].strftime(timestamp_format)))
+    
+        # Check if limits are set and notify if they are crossed.
+    limit_history = db.user_limits.find({'user_telegram_id' : user_bills['user_telegram_id']})
+    for limit in limit_history:
+        if 'daily' in limit:
+            start_timestamp = datetime.combine(date.today(), datetime.min.time())
+            end_timestamp = start_timestamp + timedelta(days=1)
+            records = db.user_bills.aggregate([
+                {'$match' : { 'user_telegram_id' : message.chat.id, 'timestamp' : {'$gte':start_timestamp,'$lt': end_timestamp}}},
+                {'$group' : {'_id':{'category':'$category'}, 'count':{'$sum':'$cost'}}}
+                ])
+            if not records:
+                bot.send_message(chat_id, 'You have no Daily records')
+            else:
+                total_spending = 0
+                for record in records:
+                    total_spending += record['count']
+                if total_spending >= float(limit['daily']):
+                    bot.send_message(chat_id, 'DAILY LIMIT EXCEEDED. Your daily limit is {}, but you spent {} today'.format(limit['daily'], total_spending))
+
+        if 'monthly' in limit:
+            start_timestamp = datetime.combine(date.today().replace(day=1), datetime.min.time())
+            end_timestamp = datetime.combine(date.today(), datetime.max.time())
+            records = db.user_bills.aggregate([
+                {'$match' : { 'user_telegram_id' : message.chat.id, 'timestamp' : {'$gte':start_timestamp,'$lt': end_timestamp}}},
+                {'$group' : {'_id':{'category':'$category'}, 'count':{'$sum':'$cost'}}}
+            ])
+            if not records:
+                bot.send_message(chat_id, 'You have no Monthly records')
+            else:
+                total_spending = 0
+                for record in records:
+                    total_spending += record['count']
+                if total_spending >= float(limit['monthly']):
+                    bot.send_message(chat_id, 'MONTHLY LIMIT EXCEEDED. Your Monthly limit is {}, but you spent {} this month'.format(limit['monthly'], total_spending))
+
+        if 'yearly' in limit:
+            start_timestamp = datetime.combine(date.today().replace(day=1).replace(month=1), datetime.min.time())
+            end_timestamp = datetime.combine(date.today(), datetime.max.time())
+            records = db.user_bills.aggregate([
+                {'$match' : { 'user_telegram_id' : message.chat.id, 'timestamp' : {'$gte':start_timestamp,'$lt': end_timestamp}}},
+                {'$group' : {'_id':{'category':'$category'}, 'count':{'$sum':'$cost'}}}
+            ])
+            if not records:
+                bot.send_message(chat_id, 'You have no Yearly records')
+            else:
+                total_spending = 0
+                for record in records:
+                    total_spending += record['count']
+                if total_spending >= float(limit['yearly']):
+                    bot.send_message(chat_id, 'YEARLY LIMIT EXCEEDED. Your Yearly limit is {}, but you spent {} this year'.format(limit['yearly'], total_spending))
+    
     user_bills.clear()
 
 def validate_entered_amount(amount_entered):
@@ -370,6 +425,57 @@ def display_total(message):
 def command_delete(message):
     db.user_bills.delete_many({'user_telegram_id': message.chat.id})
     bot.send_message(message.chat.id, 'All data deleted.')
+
+@bot.message_handler(commands=['limit'])
+def command_limit(message):
+    chat_id = message.chat.id
+    user_limits['user_telegram_id'] = chat_id
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup.row_width = 2
+    for c in limit_categories:
+        markup.add(c)
+    msg = bot.reply_to(message, 'Select Category', reply_markup=markup)
+    bot.register_next_step_handler(msg, post_limit_category_selection)
+
+def post_limit_category_selection(message):
+    chat_id = message.chat.id
+    selected_limit_category = message.text
+    if selected_limit_category != 'View Limits' and selected_limit_category in limit_categories:
+        global limit_category
+        limit_category = selected_limit_category
+        message = bot.send_message(chat_id, 'How much limit do you want to set on a {} basis? \n(Enter numeric values only)'.format(str(limit_category)))
+        bot.register_next_step_handler(message, post_limit_amount_input)
+    elif selected_limit_category == 'View Limits':
+        print("viewing limits for current user")
+        view_limits()
+    else:
+        message = bot.send_message(chat_id, 'Entered wrong input')
+
+def post_limit_amount_input(message):
+    chat_id = message.chat.id
+    amount_entered = message.text
+    amount_value = validate_entered_amount(amount_entered)
+
+    #db.user_limits.delete_many({'user_telegram_id': message.chat.id})
+
+    user_history = list(db.user_limits.find({'user_telegram_id' : user_limits['user_telegram_id']}))
+
+    if len(user_history) == 0:
+        user_limits[limit_category] = amount_value
+        db.user_limits.insert_one(user_limits)
+        print('Added Limit record '+ str(user_limits) +' to user_limits collection')
+    else:
+         db.user_limits.find_one_and_update({"user_telegram_id" : user_limits['user_telegram_id']}, { '$set': { limit_category : amount_value} }, return_document = ReturnDocument.AFTER)
+
+def view_limits():
+    user_history_obj = db.user_limits.find({'user_telegram_id' : user_limits['user_telegram_id']})
+    for user_history in user_history_obj:
+        if 'daily' in user_history and user_history['daily']:
+            message = bot.send_message(user_limits['user_telegram_id'], 'Your Daily Limit is - {}'.format(user_history['daily']))
+        if 'monthly' in user_history and user_history['monthly']:
+            message = bot.send_message(user_limits['user_telegram_id'], 'Your Montly Limit is - {}'.format(user_history['monthly']))
+        if 'yearly' in user_history and user_history['yearly']:
+            message = bot.send_message(user_limits['user_telegram_id'], 'Your Yearly Limit is - {}'.format(user_history['yearly']))
 
 async def main():
     try:
