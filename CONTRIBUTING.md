@@ -1,22 +1,22 @@
-# Contributing to TrackMyDollar
+# Contributing to SmartSpend
 
-Follow the set of guidelines below to contribute to TrackMyDollar!
+Follow the set of guidelines below to contribute to SmartSpend!
 
 ## Code of Conduct
 
-By participating, you are expected to uphold this code. Please report unacceptable behavior to psomash@ncsu.edu.
+By participating, you are expected to uphold this code. Please report unacceptable behavior to kajadhav@ncsu.edu / spsuarl@ncsu.edu.
 
 Prerequistes required before starting this project
 
 1. Must be a graduate student at NC State University
-2. Must be a student in Software Engineering Course in Fall 2021
+2. Must be a student in Software Engineering Course in Fall 2022.
 3. Have proficiency in Python
 
 ## How can I Contribute -
  
 ### Reporting Bugs
 
-This section guides you through submitting a bug report for TrackMyDollar.
+This section guides you through submitting a bug report for SmartSpend.
 Following these guidelines helps maintainers and the community understand your report, reproduce the behavior and find related reports.
 
 Before Submitting A Bug Report
