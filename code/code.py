@@ -19,10 +19,7 @@ api_token = os.getenv('TELEGRAM_BOT_TOKEN')
 api_id = os.getenv('TELEGRAM_API_ID')
 api_hash = os.getenv('TELEGRAM_API_HASH')
 api_username = os.getenv('TELEGRAM_USERNAME')
-
 cluster = os.getenv('MONGO_DB_URL')
-if not cluster or len(cluster) == 0:
-    cluster = "mongodb+srv://"+api_username+":"+api_hash+"@cluster0.yon6aco.mongodb.net/smartSpendDB?retryWrites=true&w=majority"
 
 mongo_client = MongoClient(cluster)
 db = mongo_client.smartSpendDB
@@ -171,7 +168,7 @@ def handle_user_id_input_for_sharing(message):
     user_bills['shared_with'] = [username]
 
     # TODO: Can uncomment below to add recursive sharing once the print menu is finalized.
-    # get_sharing_details(message)
+    get_sharing_details(message)
 
 
     asyncio.run(send_update_to_user_about_expense(message, user_bills))
@@ -267,9 +264,14 @@ def show_history(message):
         chat_id = message.chat.id
         if user_history is None:
             raise Exception("Sorry! No spending records found!")
-        spend_total_str = "Here is your spending history : \n|    DATE AND TIME   | CATEGORY | AMOUNT | SHARED WITH  |\n-----------------------------------------------------------------------\n"
+        spend_total_str = "Here is your spending history : \n|    DATE AND TIME   | CATEGORY | AMOUNT |\n-----------------------------------------------------------------------\n"
         for rec in user_history:
-            spend_total_str += '{:20s} {:20s} {:20s} {}\n'.format(str(rec['timestamp'].strftime(timestamp_format)),  str(rec['category']),  str(rec['cost']), str(rec['shared_with'][0]) if 'shared_with' in rec.keys() else "")
+            spend_total_str += '\n{:20s} {:20s} {:20s}\n'.format(str(rec['timestamp'].strftime(timestamp_format)),  str(rec['category']),  str(rec['cost']))
+            if 'shared_with' in rec.keys():
+                spend_total_str += 'Shared With: '
+                for username in rec['shared_with']:
+                    spend_total_str += '{}'.format(str(username))
+                spend_total_str += '\n'
         bot.send_message(chat_id, spend_total_str)
     except Exception as e:
         bot.reply_to(message, "Oops!" + str(e))	
