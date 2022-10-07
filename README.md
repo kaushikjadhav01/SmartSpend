@@ -1,18 +1,11 @@
 # SmartSpend
-<hr>
-<p align="center">
-<a><img  height=560 width=1000 
-  src="https://github.com/deekay2310/MyDollarBot/blob/c56b4afd4fd5bbfffea0d0a4aade58596a5cb678/docs/0001-8711513694_20210926_212845_0000.png" alt="Expense tracking made easy!"></a>
-</p>
-<hr>
 
 ![MIT license](https://img.shields.io/badge/License-MIT-green.svg)
 ![GitHub](https://img.shields.io/badge/Language-Python-blue.svg)
-Contributors WIP
-<!-- ![GitHub contributors](https://img.shields.io/github/contributors/deekay2310/SE21_HW2B_Group6) -->
+![GitHub contributors](https://img.shields.io/badge/Contributors-5-brightgreen)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5542548.svg)](https://doi.org/10.5281/zenodo.5542548)
 [![Platform](https://img.shields.io/badge/Platform-Telegram-blue)](https://desktop.telegram.org/)
-[![Build Status](https://app.travis-ci.com/deekay2310/MyDollarBot.svg?branch=main)](https://app.travis-ci.com/github/deekay2310/MyDollarBot)
+![Python CI](https://github.com/kaushikjadhav01/SmartSpend/actions/workflows/build-test.yaml/badge.svg)
 
 <hr>
 
@@ -25,6 +18,20 @@ With simple commands, this bot allows you to:
 - Display your spending history
 - Clear/Erase all your records
 - Edit/Change any spending details if you wish to
+
+### <u>Additions:</u>
+- Fixed several bugs related to parsing and tracking.
+- Refactored old code to suit updated structure.
+- Moved away from Travis to GitHub actions for rolling builds.
+- <u>Feature</u> -> Upgrade backend to use Mongo DB for better storage and access.
+- - Supports cloud based central storage as well as locally hosted database.
+- - Allows for free extensions since the data is stored in Object model.
+- <u>Feature</u> -> Add 'share' feature to share expense with other telegram users.
+- - Sends a notification message to the other user indicating the added expense.
+- - Added persistent storage for future tracking and settlement of balances.
+- <u>Feature</u> -> Add 'limit' faeture to work as an alarm when spending exceed preset limits.
+- - Users can create limits on a daily, monthly, and yearly basis.
+- - When user adds an expense, all three limits are checked.
 
 ## Demo
 https://user-images.githubusercontent.com/15325746/135395315-e234dc5e-d891-470a-b3f4-04aa1d11ed45.mp4
