@@ -165,16 +165,15 @@ def handle_user_id_input_for_sharing(message):
 
     bot.send_message(chat_id, "User {} will be sent an update about the split".format(username))
 
-    user_bills['shared_with'] = [username]
+    if 'shared_with' in user_bills:
+        user_bills['shared_with'].append(username)
+    else:
+        user_bills['shared_with'] = [username]
 
-    # TODO: Can uncomment below to add recursive sharing once the print menu is finalized.
     get_sharing_details(message)
 
-
-    asyncio.run(send_update_to_user_about_expense(message, user_bills))
-
-    # NOTE: Keep this at last since it clears the bill details
-    add_bill_to_database(message)
+    # TODO: Add message queue to handle multiple requests
+    # asyncio.run(send_update_to_user_about_expense(message, user_bills))
 
 
 async def send_update_to_user_about_expense(message, user_bills):
