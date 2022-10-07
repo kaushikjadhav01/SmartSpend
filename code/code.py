@@ -165,7 +165,7 @@ def handle_user_id_input_for_sharing(message):
     user_bills['shared_with'] = [username]
 
     # TODO: Can uncomment below to add recursive sharing once the print menu is finalized.
-    # get_sharing_details(message)
+    get_sharing_details(message)
 
 
     asyncio.run(send_update_to_user_about_expense(message, user_bills))
@@ -211,10 +211,11 @@ def show_history(message):
             raise Exception("Sorry! No spending records found!")
         spend_total_str = "Here is your spending history : \n|    DATE AND TIME   | CATEGORY | AMOUNT |\n-----------------------------------------------------------------------\n"
         for rec in user_history:
-            spend_total_str += '{:20s} {:20s} {:20s} {}\n'.format(str(rec['timestamp'].strftime(timestamp_format)),  str(rec['category']),  str(rec['cost']))
+            spend_total_str += '\n{:20s} {:20s} {:20s}\n'.format(str(rec['timestamp'].strftime(timestamp_format)),  str(rec['category']),  str(rec['cost']))
             if 'shared_with' in rec.keys():
+                spend_total_str += 'Shared With: '
                 for username in rec['shared_with']:
-                    spend_total_str += '{}'.format(str(rec['shared_with'][username]))
+                    spend_total_str += '{}'.format(str(username))
                 spend_total_str += '\n'
         bot.send_message(chat_id, spend_total_str)
     except Exception as e:
