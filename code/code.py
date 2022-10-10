@@ -13,13 +13,20 @@ import asyncio
 from pymongo import MongoClient, ReturnDocument
 import os
 from dotenv import load_dotenv
+import argparse
+import Scraped_data
+import formatter
+from tabulate import tabulate
 load_dotenv()
 
 api_token = os.getenv('TELEGRAM_BOT_TOKEN')
 api_id = os.getenv('TELEGRAM_API_ID')
 api_hash = os.getenv('TELEGRAM_API_HASH')
 api_username = os.getenv('TELEGRAM_USERNAME')
+
 cluster = os.getenv('MONGO_DB_URL')
+if not cluster or len(cluster) == 0:
+    cluster = "mongodb+srv://"+api_username+":"+api_hash+"@cluster0.yon6aco.mongodb.net/smartSpendDB?retryWrites=true&w=majority"
 
 mongo_client = MongoClient(cluster)
 db = mongo_client.smartSpendDB
@@ -40,7 +47,8 @@ commands = {
     'history': 'Display spending history',
     'delete': 'Clear/Erase all your records',
     'edit': 'Edit/Change spending details',
-    'limit': 'Add daily/monthly/yearly limits for spending'
+    'limit': 'Add daily/monthly/yearly limits for spending',
+    'Search':'Search a product from 2 different websites and comapre prices'
 }
 
 bot = telebot.TeleBot(api_token)
@@ -80,6 +88,51 @@ def command_add(message):
     msg = bot.reply_to(message, 'Select Category', reply_markup=markup)
     bot.register_next_step_handler(msg, post_category_selection)
 
+@bot.message_handler(commands=['Search'])
+def command_select(message):
+    chat_id = message.chat.id
+   
+    message = bot.send_message(chat_id, 'what is the product Name?')
+    bot.register_next_step_handler(message, product_table)
+    
+
+def product_table(message):
+    try:
+        chat_id = message.chat.id
+        product_name = message.text
+        bot.send_message(chat_id, 'Loading....')
+        bot.send_message(chat_id, 'Compared prices are')
+        parser = argparse.ArgumentParser(description="Slash")
+        parser.add_argument('--search', type=str, help='Product search query')
+        parser.add_argument('--num', type=int, help="Maximum number of records", default=3)
+        parser.add_argument('--sort', type=str, nargs='+', help="Sort according to re (relevance: default), pr (price) or ra (rating)", default="re")
+        parser.add_argument('--link', action='store_true', help="Show links in the table")
+        parser.add_argument('--des', action='store_true', help="Sort in descending (non-increasing) order")
+        args = parser.parse_args()
+                
+        products1 = Scraped_data.searchAmazon(product_name)
+        products2 = Scraped_data.searchWalmart(product_name)
+        print(products1)
+
+        for sortBy in args.sort:
+            products1 = formatter.sortList(products1, sortBy, args.des)[:args.num]
+            products2 = formatter.sortList(products2, sortBy, args.des)[:args.num]
+            results = products1 + products2
+            results = formatter.sortList(results, sortBy, args.des)
+            
+
+        print()
+        print()
+        print(tabulate(results, headers="keys", tablefmt="github"))
+        print()
+        print()
+
+        #bot.send_message(chat_id,f'<pre>{table}</pre>', parse_mode=ParseMode.HTML)
+        bot.send_message(chat_id, tabulate(results, headers="keys", tablefmt="github"))
+    except Exception as e:
+        bot.reply_to(message, 'Oh no. ' + str(e))
+
+   
 async def find_user_by_username(username):
     try:
         async with TelegramClient(api_username, api_id, api_hash) as client:
@@ -165,15 +218,16 @@ def handle_user_id_input_for_sharing(message):
 
     bot.send_message(chat_id, "User {} will be sent an update about the split".format(username))
 
-    if 'shared_with' in user_bills:
-        user_bills['shared_with'].append(username)
-    else:
-        user_bills['shared_with'] = [username]
+    user_bills['shared_with'] = [username]
 
-    get_sharing_details(message)
+    # TODO: Can uncomment below to add recursive sharing once the print menu is finalized.
+    # get_sharing_details(message)
 
-    # TODO: Add message queue to handle multiple requests
-    # asyncio.run(send_update_to_user_about_expense(message, user_bills))
+
+    asyncio.run(send_update_to_user_about_expense(message, user_bills))
+
+    # NOTE: Keep this at last since it clears the bill details
+    add_bill_to_database(message)
 
 
 async def send_update_to_user_about_expense(message, user_bills):
@@ -263,14 +317,9 @@ def show_history(message):
         chat_id = message.chat.id
         if user_history is None:
             raise Exception("Sorry! No spending records found!")
-        spend_total_str = "Here is your spending history : \n|    DATE AND TIME   | CATEGORY | AMOUNT |\n-----------------------------------------------------------------------\n"
+        spend_total_str = "Here is your spending history : \n|    DATE AND TIME   | CATEGORY | AMOUNT | SHARED WITH  |\n-----------------------------------------------------------------------\n"
         for rec in user_history:
-            spend_total_str += '\n{:20s} {:20s} {:20s}\n'.format(str(rec['timestamp'].strftime(timestamp_format)),  str(rec['category']),  str(rec['cost']))
-            if 'shared_with' in rec.keys():
-                spend_total_str += 'Shared With: '
-                for username in rec['shared_with']:
-                    spend_total_str += '{}'.format(str(username))
-                spend_total_str += '\n'
+            spend_total_str += '{:20s} {:20s} {:20s} {}\n'.format(str(rec['timestamp'].strftime(timestamp_format)),  str(rec['category']),  str(rec['cost']), str(rec['shared_with'][0]) if 'shared_with' in rec.keys() else "")
         bot.send_message(chat_id, spend_total_str)
     except Exception as e:
         bot.reply_to(message, "Oops!" + str(e))	
@@ -333,7 +382,7 @@ def edit_date(m):
     global user_bills
     timestamp = datetime.strptime(m.text, timestamp_format)
     user_bills = db.user_bills.find_one_and_update({"_id" : user_bills['_id']}, { '$set': { "timestamp" : timestamp} }, return_document = ReturnDocument.AFTER)
-    bot.reply_to(m, "Date is updated")
+    bot.reply_to(m, "Data is updated")
     print('Updated record '+ str(user_bills) +' to user_bills collection')
     
 def edit_cat(m):
@@ -344,7 +393,7 @@ def edit_cat(m):
         bot.register_next_step_handler(message, edit_cat)
     else:
         db.user_bills.find_one_and_update({"_id" : user_bills['_id']}, { '$set': { "category" : category} }, return_document = ReturnDocument.AFTER)
-        bot.reply_to(m, "Date is updated")
+        bot.reply_to(m, "Data is updated")
         print('Updated record '+ str(user_bills) +' to user_bills collection')
 
 def edit_cost(m):
@@ -353,7 +402,7 @@ def edit_cost(m):
     try:
         if(validate_entered_amount(new_cost) != 0):
             db.user_bills.find_one_and_update({"_id" : user_bills['_id']}, { '$set': { "cost" : float(new_cost)} }, return_document = ReturnDocument.AFTER)
-            bot.reply_to(m, "Date is updated")
+            bot.reply_to(m, "Data is updated")
             print('Updated record '+ str(user_bills) +' to user_bills collection')
         else:
             bot.reply_to(m, "The cost is invalid")
@@ -481,6 +530,7 @@ def view_limits():
 async def main():
     try:
         bot.polling(none_stop=True)
+      
     except Exception as e:
         time.sleep(3)
         print(e)
