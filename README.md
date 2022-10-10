@@ -36,6 +36,10 @@ With simple commands, this bot allows you to:
 ## Demo
 https://user-images.githubusercontent.com/15325746/135395315-e234dc5e-d891-470a-b3f4-04aa1d11ed45.mp4
 
+
+https://user-images.githubusercontent.com/95981350/194871840-4b8816b7-a634-4c4f-b247-293cedb932c8.mp4
+
+
 ## Installation guide
 
 The below instructions can be followed in order to set-up this bot at your end in a span of few minutes! Let's get started:
