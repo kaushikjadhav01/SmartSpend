@@ -85,5 +85,5 @@ The below instructions can be followed in order to set-up this bot at your end i
 <p>Title:'SmartSpend'</p>
 <p>Version: '1.0'</p>
 <p>Description: 'An easy to use Telegram Bot to track everyday expenses'</p>
-<p>Authors:'Kaushik, Surya, Pradyumna, Harshita, Aditi'</p>
+<p>Authors:'Kaushik, Surya, Pradyumna, Harshitha, Aditi'</p>
 <p>--------------------------------------------------------------------------------------------------</p>
