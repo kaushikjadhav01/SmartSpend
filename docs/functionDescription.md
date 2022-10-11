@@ -57,3 +57,7 @@ edit_date(m)
 edit_cost(m)
 - This function is triggered if user inputs Cost in edit2 function
 - It will ask user for new cost and update the record accordingly
+
+command_select(m)
+- Function that defines how the /Search has to be handled/processed
+- The function calls the functon product_table(m) which returns the compared prices of the entered product.
