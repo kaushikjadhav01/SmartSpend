@@ -17,22 +17,22 @@
   <tr>
     <td>Number of commits</td>
     <td>Three</td>
-    <td>GitHub commits on 'main': https://github.com/deekay2310/MyDollarBot/commits/main</td>
+    <td>GitHub commits on 'main': https://github.com/kaushikjadhav01/SmartSpend/commits/main</td>
  </tr>
   <tr>
     <td>Number of commits: by different people</td>
     <td>Three</td>
-    <td>Commits by each team member: https://github.com/deekay2310/MyDollarBot/tree/dev, https://github.com/deekay2310/MyDollarBot/tree/prakruthi, https://github.com/deekay2310/MyDollarBot/tree/radhika, https://github.com/deekay2310/MyDollarBot/tree/rohan, https://github.com/deekay2310/MyDollarBot/tree/Sunidhi</td>
+    <td>Commits by each team member: https://github.com/kaushikjadhav01/SmartSpend/commits?author=kaushikjadhav01, https://github.com/kaushikjadhav01/SmartSpend/commits?author=Surya-06, https://github.com/kaushikjadhav01/SmartSpend/commits?author=vemuriPradyumna, https://github.com/kaushikjadhav01/SmartSpend/commits?author=Harshitha-hp07, https://github.com/kaushikjadhav01/SmartSpend/commits?author=aditi-v79</td>
  </tr>
   <tr>
     <td>Issues reports: there are many issues are being closed</td>
     <td>Three</td>
-    <td>https://github.com/deekay2310/MyDollarBot/issues</td>
+    <td>https://github.com/kaushikjadhav01/SmartSpend/issues</td>
   </tr>
   <tr>
     <td>Issues are being closed</td>
     <td>Three</td>
-    <td>https://github.com/deekay2310/MyDollarBot/issues?q=is%3Aissue+is%3Aclosed</td>
+    <td>https://github.com/kaushikjadhav01/SmartSpend/issues?q=is%3Aissue+is%3Aclosed</td>
   </tr>  
   <tr>
     <td>DOI badge: exists</td>
@@ -42,27 +42,27 @@
  <tr>
     <td>Docs: doco generated , format not ugly</td>
     <td>Three</td>
-    <td>https://github.com/deekay2310/MyDollarBot/tree/main/docs</td>
+    <td>https://github.com/kaushikjadhav01/SmartSpend/tree/main/docs</td>
  </tr>
  <tr>
     <td>Docs: what: point descriptions of each class/function (in isolation)</td>
     <td>Three</td>
-    <td>https://github.com/deekay2310/MyDollarBot/blob/main/docs/functionDescription.md</td>
+    <td>https://github.com/kaushikjadhav01/SmartSpend/blob/main/docs/functionDescription.md</td>
  </tr>
  <tr>
     <td>Docs: how: for common use cases X,Y,Z mini-tutorials showing worked examples on how to do X,Y,Z</td>
     <td>Three</td>
-    <td>https://github.com/deekay2310/MyDollarBot/blob/main/README.md</td>
+    <td>https://github.com/kaushikjadhav01/SmartSpend/blob/main/README.md</td>
  </tr>
  <tr>
     <td>Docs: why: docs tell a story, motivate the whole thing, deliver a punchline that makes you want to rush out and use the thing</td>
     <td>Three</td>
-    <td>https://github.com/deekay2310/MyDollarBot/blob/main/README.md</td>
+    <td>https://github.com/kaushikjadhav01/SmartSpend/blob/main/README.md</td>
  </tr>
  <tr>
     <td>Docs: short video, animated, hosted on your repo. That convinces people why they want to work on your code.</td>
     <td>Three</td>
-    <td>https://github.com/deekay2310/MyDollarBot/blob/main/README.md</td>
+    <td>https://github.com/kaushikjadhav01/SmartSpend/blob/main/README.md</td>
  </tr>
  <tr>
     <td>Use of version control tools</td>
@@ -107,7 +107,7 @@
   <tr>
     <td>the files CONTRIBUTING.md lists coding standards and lots of tips on how to extend the system without screwing things up</td>
     <td>Three</td>
-    <td>https://github.com/deekay2310/MyDollarBot/blob/main/CONTRIBUTING.md</td>
+    <td>https://github.com/kaushikjadhav01/SmartSpend/blob/main/CONTRIBUTING.md</td>
  </tr>
  <tr>
     <td>issues are discussed before they are closed</td>
