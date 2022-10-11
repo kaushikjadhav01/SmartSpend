@@ -64,10 +64,8 @@ The below instructions can be followed in order to set-up this bot at your end i
 
 8. BotFather will now confirm the creation of your bot and provide a TOKEN to access the HTTP API - copy this token for future use.
 
-9. In the directory where this repo has been cloned, navigate to the "code" folder and open the "code.py" file. This file consists of a variable by the name "api_token". Paste the token copied in step 8 in the placeholder provided for this variable:
-```
-  api_token = "INSERT API KEY HERE"
-```
+9. Create a new collection in MongoDB Cloud Atlas. In the directory where this repo has been cloned, create a .env file with format like .env.sample in this repo and replace XXXX with the actual bot name, tokens and api hash and MongoDB URLs:
+
 10. In the Telegram app, search for your newly created bot by entering the username and open the same. Once this is done, go back to the terminal session. Navigate to the directory containing the "code.py" file and run the following command:
 ```
   python code.py
@@ -85,5 +83,5 @@ The below instructions can be followed in order to set-up this bot at your end i
 <p>Title:'SmartSpend'</p>
 <p>Version: '1.0'</p>
 <p>Description: 'An easy to use Telegram Bot to track everyday expenses'</p>
-<p>Authors:'Kaushik, Surya, Pradyumna, Harshita, Aditi'</p>
+<p>Authors:'Kaushik, Surya, Pradyumna, Harshitha, Aditi'</p>
 <p>--------------------------------------------------------------------------------------------------</p>

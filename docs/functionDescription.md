@@ -57,3 +57,42 @@ edit_date(m)
 edit_cost(m)
 - This function is triggered if user inputs Cost in edit2 function
 - It will ask user for new cost and update the record accordingly
+
+command_select(m)
+- Function that defines how the /Search has to be handled/processed
+
+product_table(m)
+- This function is triggered if the user enters a product name for comparing the prices
+
+find_user_by_username(username)
+- This function searches the user from the input username
+
+get_sharing_details(m)
+- This function is called if the user wants to split up the bill with other users
+
+post_sharing_selection(m)
+- Function that takes input of other user ids for splitting up the bill
+
+handle_user_id_input_for_sharing(m)
+- This function stores the info of other users among whom the bills should be splitted
+
+send_update_to_user_about_expense(m,u)
+- tThe function which sends other users about their splits
+
+add_bill_to_database(m)
+- Function stores the split details in database , also check if limits are set and notify if they are crossed
+
+validate_entered_amount(a)
+- Functions checks the entered amount is valid or nt (numerical)
+
+command_delete(m)
+- Function delete data from database regarding all the splits
+
+command_limit(m)
+- Function takes input whether the limit should be set for day/Month/Year
+
+post_limit_category_selection(m)
+- The Function sets takes the input data and sets the limit in selected category
+
+post_limit_amount_input(message)
+- The function saves the limit details to database and also validates the entered amount
