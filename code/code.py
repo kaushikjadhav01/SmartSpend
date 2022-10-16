@@ -117,13 +117,8 @@ def product_table(message):
             products2 = formatter.sortList(products2, sortBy, args.des)[:args.num]
             results = products1 + products2
             results = formatter.sortList(results, sortBy, args.des)
-            
-
-        print()
-        print()
+    
         print(tabulate(results, headers="keys", tablefmt="github"))
-        print()
-        print()
         #bot.send_message(chat_id,f'<pre>{table}</pre>', parse_mode=ParseMode.HTML)
         bot.send_message(chat_id, tabulate(results, headers="keys", tablefmt="github"))
     except Exception as e:
