@@ -45,7 +45,8 @@ commands = {
     'delete': 'Clear/Erase all your records',
     'edit': 'Edit/Change spending details',
     'limit': 'Add daily/monthly/yearly limits for spending',
-    'search':'Search a product and comapre prices'
+    'search':'Search a product and comapre prices',
+    'settle': 'Settle an expense shared with you'
 }
 
 bot = telebot.TeleBot(api_token)
@@ -562,6 +563,76 @@ def view_limits():
             message = bot.send_message(user_limits['user_telegram_id'], 'Your Montly Limit is - {}'.format(user_history['monthly']))
         if 'yearly' in user_history and user_history['yearly']:
             message = bot.send_message(user_limits['user_telegram_id'], 'Your Yearly Limit is - {}'.format(user_history['yearly']))
+	
+	
+#Handling /settle command
+@bot.message_handler(commands=['settle'])
+def command_settle(message):
+    chat_id = message.chat.id
+    message = bot.send_message(chat_id, "Please enter the date and time of the transaction you would like to settle in the following format, Eg: Sep 21 2022 1:33PM")
+    bot.register_next_step_handler(message, settle_up)
+
+def settle_up(message):
+    record=dict()
+    timestamp = datetime.strptime(message.text, timestamp_format)
+    
+    try:
+        user_history = db.user_bills.find({'user_telegram_id' : message.chat.id})
+
+        chat_id = message.chat.id
+        if user_history is None:
+            raise Exception("Sorry! No spending records found!")
+        spend_total_str = "Here is your spending history : \n|    DATE AND TIME   | CATEGORY | AMOUNT | SHARED WITH  |\n-----------------------------------------------------------------------\n"
+        for rec in user_history:
+            print(" @1 ")
+            print(str(rec['timestamp'].strftime(timestamp_format)))
+            print(" @2@ ")
+            print(message.text)
+            print(type(rec))
+            if(str(rec['timestamp'].strftime(timestamp_format))==message.text) :
+                chat_id = message.chat.id
+                record['_id']=rec['_id']
+                record['timestamp']=rec['timestamp']
+                record['cost']=rec['cost']
+                record['category']=rec['category']
+                record['shared_with']=rec['shared_with']
+                spend_total_str += '{:20s} {:20s} {:20s} {}\n'.format(str(rec['timestamp'].strftime(timestamp_format)),  str(rec['category']),  str(rec['cost']), str(rec['shared_with'][0]) if 'shared_with' in rec.keys() else "")
+        #bot.send_message(chat_id, spend_total_str)
+        print(" @4@ ")
+        print(record)
+        
+        bot.send_message(chat_id, 'The following expenditure has been selected to settle up: $' + str(record['cost']) + ' for ' + str(record['category']) + ' on ' + str(record['timestamp'].strftime(timestamp_format)))
+        bot.send_message(chat_id, 'Your share of the expense is: {}'.format(record['cost']/(len(record['shared_with'])+1)))
+        choice_for_settle(message, record)
+
+    except Exception as e:
+        bot.reply_to(message, "Oops!" + str(e)) 
+
+
+def choice_for_settle(message, record):
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup.row_width = 2
+    markup.add("Yes")
+    markup.add("No")
+    bot.send_message(message.chat.id, 'Do you want to settle this bill?', reply_markup=markup)
+    bot.register_next_step_handler(message, post_settle_selection,record)
+
+
+def post_settle_selection(message,record):
+    chat_id = message.chat.id
+    response = message.text
+    if response == "Yes":
+        new_cost= record['cost']-(record['cost']/(len(record['shared_with'])+1))
+        print(new_cost)
+        settled_user_bills= db.user_bills.find_one_and_update({"_id" : record['_id']}, { '$set': { "cost" : float(new_cost)} }, return_document = ReturnDocument.AFTER)
+        paid_with_str = "Here is new expense you settled down : \n|    DATE AND TIME   | CATEGORY | AMOUNT TO BE PAID BY OTHERS | SHARED WITH | PAID BY \n-----------------------------------------------------------------------\n"
+        paid_with_str += '{:20s} {:20s} {:20s} {:20s}  \n'.format(str(settled_user_bills['timestamp'].strftime(timestamp_format)),  str(settled_user_bills['category']),  str(settled_user_bills['cost']), str(settled_user_bills['shared_with']) ) 
+        bot.send_message(chat_id, paid_with_str)
+        
+    else:
+        bot.send_message(chat_id, "You did not select any expense to settle. ")
+  
+
 
 async def main():
     try:
