@@ -584,9 +584,7 @@ def settle_up(message):
             raise Exception("Sorry! No spending records found!")
         spend_total_str = "Here is your spending history : \n|    DATE AND TIME   | CATEGORY | AMOUNT | SHARED WITH  |\n-----------------------------------------------------------------------\n"
         for rec in user_history:
-            print(" @1 ")
             print(str(rec['timestamp'].strftime(timestamp_format)))
-            print(" @2@ ")
             print(message.text)
             print(type(rec))
             if(str(rec['timestamp'].strftime(timestamp_format))==message.text) :
@@ -598,7 +596,6 @@ def settle_up(message):
                 record['shared_with']=rec['shared_with']
                 spend_total_str += '{:20s} {:20s} {:20s} {}\n'.format(str(rec['timestamp'].strftime(timestamp_format)),  str(rec['category']),  str(rec['cost']), str(rec['shared_with'][0]) if 'shared_with' in rec.keys() else "")
         #bot.send_message(chat_id, spend_total_str)
-        print(" @4@ ")
         print(record)
         
         bot.send_message(chat_id, 'The following expenditure has been selected to settle up: $' + str(record['cost']) + ' for ' + str(record['category']) + ' on ' + str(record['timestamp'].strftime(timestamp_format)))
