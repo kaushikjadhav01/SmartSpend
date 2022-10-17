@@ -379,6 +379,16 @@ def edit_date(m):
     timestamp = datetime.strptime(m.text, timestamp_format)
     user_bills = db.user_bills.find_one_and_update({"_id" : user_bills['_id']}, { '$set': { "timestamp" : timestamp} }, return_document = ReturnDocument.AFTER)
     bot.reply_to(m, "Date is updated")
+    #print(user_bills)
+
+    if user_bills['shared_with'] != 'NULL':
+        for x in user_bills['shared_with']:
+            print(x)
+            spend_total_str = "Here is the modified expense : \n|    DATE AND TIME   | CATEGORY | AMOUNT \n-----------------------------------------------------------------------\n"
+            spend_total_str += '{:20s} {:20s} {:20s} \n'.format(str(user_bills['timestamp'].strftime(timestamp_format)),  str(user_bills['category']),  str(user_bills['cost'])) 
+            asyncio.run(updating_user_with_updated_expense(m, x, user_bills))
+            bot.send_message(user_bills['user_telegram_id'], spend_total_str)
+	
     print('Updated record '+ str(user_bills) +' to user_bills collection')
     
 def edit_cat(m):
@@ -388,8 +398,16 @@ def edit_cat(m):
         message = bot.reply_to(m, 'Please type new category.')
         bot.register_next_step_handler(message, edit_cat)
     else:
-        db.user_bills.find_one_and_update({"_id" : user_bills['_id']}, { '$set': { "category" : category} }, return_document = ReturnDocument.AFTER)
+        updated_user_bill=db.user_bills.find_one_and_update({"_id" : user_bills['_id']}, { '$set': { "category" : category} }, return_document = ReturnDocument.AFTER)
         bot.reply_to(m, "Date is updated")
+	if updated_user_bill['shared_with'] != 'NULL':
+            for x in updated_user_bill['shared_with']:
+                print(x)
+                spend_total_str = "Here is the modified expense : \n|    DATE AND TIME   | CATEGORY | AMOUNT \n-----------------------------------------------------------------------\n"
+                spend_total_str += '{:20s} {:20s} {:20s} \n'.format(str(updated_user_bill['timestamp'].strftime(timestamp_format)),  str(updated_user_bill['category']),  str(updated_user_bill['cost'])) 
+                asyncio.run(updating_user_with_updated_expense(m, x, updated_user_bill))
+                bot.send_message(user_bills['user_telegram_id'], spend_total_str)
+		
         print('Updated record '+ str(user_bills) +' to user_bills collection')
 
 def edit_cost(m):
@@ -397,14 +415,36 @@ def edit_cost(m):
     new_cost = m.text
     try:
         if(validate_entered_amount(new_cost) != 0):
-            db.user_bills.find_one_and_update({"_id" : user_bills['_id']}, { '$set': { "cost" : float(new_cost)} }, return_document = ReturnDocument.AFTER)
+            updated_user_bill=db.user_bills.find_one_and_update({"_id" : user_bills['_id']}, { '$set': { "cost" : float(new_cost)} }, return_document = ReturnDocument.AFTER)
             bot.reply_to(m, "Date is updated")
+	    #update the shared user 
+            if updated_user_bill['shared_with'] != 'NULL':
+                for x in updated_user_bill['shared_with']:
+                    print(x)
+                    spend_total_str = "Here is the modified expense : \n|    DATE AND TIME   | CATEGORY | AMOUNT \n-----------------------------------------------------------------------\n"
+                    spend_total_str += '{:20s} {:20s} {:20s} \n'.format(str(updated_user_bill['timestamp'].strftime(timestamp_format)),  str(updated_user_bill['category']),  str(updated_user_bill['cost'])) 
+                    asyncio.run(updating_user_with_updated_expense(m, x, updated_user_bill))
+                    bot.send_message(user_bills['user_telegram_id'], spend_total_str)
             print('Updated record '+ str(user_bills) +' to user_bills collection')
         else:
             bot.reply_to(m, "The cost is invalid")
             return
     except Exception as e:
-        bot.reply_to(m, "Oops!" + str(e))	
+        bot.reply_to(m, "Oops!" + str(e))
+	
+	
+# To send the shared users the updated expense
+async def updating_user_with_updated_expense(message,user_name, user_bills):
+    try:
+        user = await find_user_by_username(user_name)
+
+        if user == None:
+            return
+
+        bot.send_message(user.id, 'An expense has been modified.\n The new expense for {} on {} with value of {} was shared with you.'.format(str(user_bills['category']), str(user_bills['timestamp'].strftime(timestamp_format)), str(user_bills['cost'])))
+    except Exception as e:
+        print("Error during message send to remote user : ", e)
+		
 
 #function to display total expenditure
 @bot.message_handler(commands=['display'])
