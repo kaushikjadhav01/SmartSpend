@@ -1,4 +1,4 @@
-Total Score: 57
+Total Score: 63
 
 <table border="0">
  <tr>
@@ -24,25 +24,17 @@ Total Score: 57
   <tr>
     <td colspan="2">Number of commits: by different people</td>
     <td>Three</td>
-    <td>Commits by each team member: https://github.com/kaushikjadhav01/SmartSpend/graphs/contributors</td>
- </tr>
-  <tr>
-    <td colspan="2">Issues reports: there are many issues are being closed</td>
-    <td>Zero</td>
-    <td>https://github.com/kaushikjadhav01/SmartSpend/issues</td>
-  </tr>
-  <tr>
-    <td colspan="2">Issues are being closed</td>
-    <td>Zero</td>
     <td>Commits by each team member: https://github.com/kaushikjadhav01/SmartSpend/commits?author=kaushikjadhav01, https://github.com/kaushikjadhav01/SmartSpend/commits?author=Surya-06, https://github.com/kaushikjadhav01/SmartSpend/commits?author=vemuriPradyumna, https://github.com/kaushikjadhav01/SmartSpend/commits?author=Harshitha-hp07, https://github.com/kaushikjadhav01/SmartSpend/commits?author=aditi-v79</td>
  </tr>
   <tr>
-    <td>Issues reports: there are many issues are being closed</td>
+    
+  <tr>
+    <td colspan="2">Issues reports: there are many issues are being closed</td>
     <td>Three</td>
     <td>https://github.com/kaushikjadhav01/SmartSpend/issues</td>
   </tr>
   <tr>
-    <td>Issues are being closed</td>
+    <td colspan="2">Issues are being closed</td>
     <td>Three</td>
     <td>https://github.com/kaushikjadhav01/SmartSpend/issues?q=is%3Aissue+is%3Aclosed</td>
   </tr>  
