@@ -219,7 +219,7 @@ def handle_user_id_input_for_sharing(message):
     get_sharing_details(message)
 
     # TODO: Add message queue to handle multiple requests
-    # asyncio.run(send_update_to_user_about_expense(message, user_bills))
+    asyncio.run(send_update_to_user_about_expense(message, user_bills))
 
 
 async def send_update_to_user_about_expense(message, user_bills):
