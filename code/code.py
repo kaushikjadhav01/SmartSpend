@@ -313,9 +313,9 @@ def show_history(message):
         for rec in user_history:
             spend_total_str += '\n{:20s} {:20s} {:20s}\n'.format(str(rec['timestamp'].strftime(timestamp_format)),  str(rec['category']),  str(rec['cost']))
             if 'shared_with' in rec.keys():
-                spend_total_str += 'Shared With: '
+                spend_total_str += 'Shared With:'
                 for username in rec['shared_with']:
-                    spend_total_str += '{}'.format(str(username))
+                    spend_total_str += ' {}'.format(str(username))
                 spend_total_str += '\n'
         bot.send_message(chat_id, spend_total_str)
     except Exception as e:
@@ -401,7 +401,7 @@ def edit_cat(m):
     else:
         updated_user_bill=db.user_bills.find_one_and_update({"_id" : user_bills['_id']}, { '$set': { "category" : category} }, return_document = ReturnDocument.AFTER)
         bot.reply_to(m, "Date is updated")
-	if updated_user_bill['shared_with'] != 'NULL':
+        if updated_user_bill['shared_with'] != 'NULL':
             for x in updated_user_bill['shared_with']:
                 print(x)
                 spend_total_str = "Here is the modified expense : \n|    DATE AND TIME   | CATEGORY | AMOUNT \n-----------------------------------------------------------------------\n"
