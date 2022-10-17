@@ -18,6 +18,10 @@ With simple commands, this bot allows you to:
 - Display your spending history
 - Clear/Erase all your records
 - Edit/Change any spending details if you wish to
+- Set limits for your daily/montly/yearly expenses
+- Search the best deals for your purchase
+- Share/Settle your expense with other users
+
 
 ### <u>Additions:</u>
 - Fixed several bugs related to parsing and tracking.
