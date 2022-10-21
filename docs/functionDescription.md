@@ -96,3 +96,17 @@ post_limit_category_selection(m)
 
 post_limit_amount_input(message)
 - The function saves the limit details to database and also validates the entered amount
+
+command_settle(m)
+- Function takes the input transaction to be settled
+
+settle_up(m)
+- The function retrieves the transaction to be settled and displays the users share to settle
+
+choice_for_settle(m,user_record)
+- The function takes the final confirmation if the user wants to settle the record
+
+post_settle_selection(m, user_record)
+- The fucntion settles the expense selected and updates the database.
+
+
